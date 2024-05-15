@@ -21,6 +21,8 @@ class BuildCommand extends Command {
 
     Directory("output").createSync();
     final outputPath = "output";
+    final postOutputFile = p.join(outputPath, "posts");
+    Directory(postOutputFile).createSync();
 
     final baseHtml = File("layouts/base.html").readAsStringSync();
     final postHtml = File("layouts/post.html").readAsStringSync();
@@ -48,7 +50,7 @@ class BuildCommand extends Command {
       final filename = p.basenameWithoutExtension(f.path);
       final name = filename.split("-").skip(1).join("-");
 
-      File(p.join(outputPath, "$name.html")).writeAsStringSync(
+      File(p.join(postOutputFile, "$name.html")).writeAsStringSync(
         baseTemplate.renderString(
           {
             "body": renderedPostHtml,

@@ -19,20 +19,22 @@ class CreateCommand extends Command {
 
     final directoryPath = argResults!.rest.first;
 
+    final templatesFolder = Directory(
+        p.join(File(Platform.script.path).parent.path, "templates", "project"));
+
     final directory = Directory(directoryPath);
     directory.createSync(recursive: true);
 
-    File(p.join(directoryPath, "README.md")).createSync();
-    File("bin/templates/_maurice.json")
-        .copy(p.join(directoryPath, "maurice.json"));
-    generateLayoutFolder(directoryPath);
-    Directory(p.join(directoryPath, "posts")).createSync();
-    Directory(p.join(directoryPath, "assets")).createSync();
-  }
-
-  void generateLayoutFolder(String directoryPath) {
-    final d = Directory(p.join(directoryPath, "layouts"))..createSync();
-
-    File("bin/templates/html/_base.html").copySync(p.join(d.path, "base.html"));
+    templatesFolder.listSync(recursive: true).forEach(
+      (element) {
+        final rest = element.path.split("templates/project/").last;
+        print(rest);
+        if (element is Directory) {
+          Directory(p.join(directory.path, rest)).createSync();
+        } else if (element is File) {
+          element.copySync(p.join(directory.path, rest));
+        }
+      },
+    );
   }
 }
