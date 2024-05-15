@@ -23,9 +23,10 @@ class CreateCommand extends Command {
     directory.createSync(recursive: true);
 
     File(p.join(directoryPath, "README.md")).createSync();
+    File("bin/templates/_maurice.json")
+        .copy(p.join(directoryPath, "maurice.json"));
     generateLayoutFolder(directoryPath);
     Directory(p.join(directoryPath, "posts")).createSync();
-    Directory(p.join(directoryPath, "config")).createSync();
     Directory(p.join(directoryPath, "assets")).createSync();
   }
 

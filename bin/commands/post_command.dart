@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:args/command_runner.dart';
-import '../utils/interactions.dart';
+import 'package:maurice/maurice.dart';
+import 'package:path/path.dart' as p;
+import 'package:slugify/slugify.dart';
 
 class PostCommand extends Command {
   @override
@@ -34,6 +38,16 @@ class NewPostCommand extends Command {
       title = askQuestion("Title of the post");
     }
 
-    PostModel
+    PostModel(creationDate: DateTime.now(), title: title);
+
+    final filename = "1-${slugify(title)}.md";
+
+    File(p.join(File(Platform.script.path).parent.path, "templates/_post.md"))
+        .copySync(
+      p.join(
+        "posts",
+        filename,
+      ),
+    );
   }
 }

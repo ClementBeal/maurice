@@ -1,8 +1,8 @@
 import 'package:args/command_runner.dart';
+import 'package:maurice/maurice.dart';
 
 import 'commands/create_command.dart';
 import 'commands/post_command.dart';
-import 'utils/print_messages.dart';
 
 Future<void> main(List<String> arguments) async {
   final runner = CommandRunner("maurice", "Generate static website with Dart")
