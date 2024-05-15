@@ -9,7 +9,9 @@ environment:
 # Add regular dependencies here.
 dependencies:
   args: ^2.4.2
-  path_to_regexp: ^0.4.0
+  markdown: ^7.2.2
+  mustache_template: ^2.0.0
+  path: ^1.9.0
   slugify: ^2.0.0
 
 dev_dependencies:
