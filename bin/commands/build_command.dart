@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:markdown/markdown.dart';
+import 'package:maurice/maurice.dart';
 import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart' as p;
 
@@ -51,13 +52,16 @@ class BuildCommand extends Command {
         );
 
     for (var f in postFiles) {
-      final lines = f.readAsLinesSync();
-      final indexLine = lines.indexOf("---");
-      final content = lines.sublist(indexLine + 1).join("\n");
+      final data = parseFile(f);
+
+      if (data == null) {
+        PrintMessage.error("The follow post is incorrect : ${f.absolute.path}");
+        exit(0);
+      }
 
       final renderedPostHtml = postTemplate.renderString(
         {
-          "post": {"content": markdownToHtml(content)},
+          "post": {"content": markdownToHtml(data.markdown)},
         },
       );
 
@@ -69,8 +73,8 @@ class BuildCommand extends Command {
           {
             "body": renderedPostHtml,
             "page": {
-              "title": "Test",
-              "description": "Test description",
+              "title": data.arguments["title"],
+              "description": data.arguments["description"],
             }
           },
         ),
@@ -101,13 +105,20 @@ class BuildCommand extends Command {
 
     for (var page in pagesFiles) {
       final filename = p.basename(page.path);
+      final data = parseFile(page);
+
+      if (data == null) {
+        PrintMessage.error(
+            "The following page is incorrect : ${page.absolute.path}");
+        exit(0);
+      }
 
       final output = baseTemplate.renderString(
         {
-          "body": page.readAsStringSync(),
+          "body": data!.markdown,
           "page": {
-            "title": "Test",
-            "description": "Test description",
+            "title": data.arguments["title"],
+            "description": data.arguments["description"],
           }
         },
       );
@@ -115,4 +126,6 @@ class BuildCommand extends Command {
       File(p.join(outputPath, filename)).writeAsString(output);
     }
   }
+
+  void _generateSitemap() {}
 }
