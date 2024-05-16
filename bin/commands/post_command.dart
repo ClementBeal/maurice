@@ -60,9 +60,14 @@ class NewPostCommand extends Command {
         name: "_post.md",
         htmlEscapeValues: false);
 
+    Directory(p.join("posts", "$nextId-${slugify(title)}")).createSync();
+    Directory(p.join("posts", "$nextId-${slugify(title)}", "images"))
+        .createSync();
+
     final outputFile = File(
       p.join(
         "posts",
+        "$nextId-${slugify(title)}",
         filename,
       ),
     )..writeAsStringSync(

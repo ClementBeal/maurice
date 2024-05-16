@@ -47,12 +47,15 @@ class BuildCommand extends Command {
     _buildPages();
     _buildAssets();
 
-    final postFiles = Directory("posts").listSync().whereType<File>().where(
-          (e) => p.extension(e.path) == ".md",
-        );
+    final postFiles = Directory("posts").listSync().whereType<Directory>();
 
     for (var f in postFiles) {
-      final data = parseFile(f);
+      final data = parseFile(
+        File(p.join(
+          f.path,
+          p.setExtension(p.basenameWithoutExtension(f.path), ".md"),
+        )),
+      );
 
       if (data == null) {
         PrintMessage.error("The follow post is incorrect : ${f.absolute.path}");
