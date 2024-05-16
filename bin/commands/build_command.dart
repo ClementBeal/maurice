@@ -44,6 +44,7 @@ class BuildCommand extends Command {
     _load();
 
     _buildPages();
+    _buildAssets();
 
     final postFiles = Directory("posts").listSync().whereType<File>().where(
           (e) => p.extension(e.path) == ".md",
@@ -75,6 +76,22 @@ class BuildCommand extends Command {
         ),
       );
     }
+  }
+
+  void _buildAssets() {
+    final templatesFolder = Directory("assets");
+    Directory(p.join(outputPath, "assets")).createSync();
+
+    templatesFolder.listSync(recursive: true).forEach(
+      (element) {
+        final rest = element.path.split("assets/").last;
+        if (element is Directory) {
+          Directory(p.join(outputPath, "assets", rest)).createSync();
+        } else if (element is File) {
+          element.copySync(p.join(outputPath, "assets", rest));
+        }
+      },
+    );
   }
 
   void _buildPages() {
