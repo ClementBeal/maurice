@@ -5,6 +5,7 @@ import 'package:maurice/maurice.dart';
 import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart' as p;
 import 'package:slugify/slugify.dart';
+import 'package:xml/xml.dart';
 
 class BuildCommand extends Command {
   @override
@@ -40,8 +41,10 @@ class BuildCommand extends Command {
 
     _load();
 
-    _buildPages();
+    final sitemap = _buildPages();
     _buildAssets();
+
+    _generateSitemap(sitemap);
   }
 
   /// copy the assets folder to the output
@@ -62,7 +65,8 @@ class BuildCommand extends Command {
     );
   }
 
-  void _buildPages() {
+  List<SitemapItem> _buildPages() {
+    final sitemap = <SitemapItem>[];
     final pagesFiles = Directory("pages").listSync().whereType<File>().where(
           (e) => p.extension(e.path) == ".html",
         );
@@ -107,10 +111,14 @@ class BuildCommand extends Command {
             final data = parseFile(resourceFile.absolute);
             final filename = p.join(
                 resourceOutputFolder.path, slugify(data!.arguments["title"]));
+            sitemap.add(SitemapItem(
+                url:
+                    "https://test.com/$route${slugify(data!.arguments["title"])}"));
+
             File(p.setExtension(filename, ".html"))
                 .writeAsStringSync(template.renderString(data.arguments));
           }
-        } else if (data.arguments["use_pagination"]) {}
+        } else if (data.arguments["use_pagination"] == "true") {}
       } else {
         final output = baseTemplate.renderString(
           {
@@ -122,8 +130,46 @@ class BuildCommand extends Command {
           },
         );
 
+        sitemap.add(SitemapItem(url: "https://test.com/$filename"));
+
         File(p.join(outputPath, filename)).writeAsString(output);
       }
     }
+
+    return sitemap;
   }
+
+  void _generateSitemap(List<SitemapItem> urls) {
+    final builder = XmlBuilder();
+    builder.processing("xml", "version='1.0' encoding='UTF-8'");
+    builder.element("urlset", attributes: {
+      "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+      "xsi:schemaLocation":
+          "http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd",
+      "xmlns": "http://www.sitemaps.org/schemas/sitemap/0.9",
+    }, nest: () {
+      for (var item in urls) {
+        builder.element("url", nest: () {
+          builder.element("loc", nest: () {
+            builder.text(item.url);
+          });
+          builder.element("changefreq", nest: () {
+            builder.text("monthly");
+          });
+          builder.element("priority", nest: () {
+            builder.text("0.5");
+          });
+        });
+      }
+    });
+
+    File(p.join(outputPath, "sitemap.xml"))
+        .writeAsStringSync(builder.buildDocument().outerXml);
+  }
+}
+
+class SitemapItem {
+  final String url;
+
+  SitemapItem({required this.url});
 }

@@ -4,6 +4,7 @@ import 'package:args/command_runner.dart';
 import 'package:maurice/maurice.dart';
 import 'package:path/path.dart' as p;
 import 'package:slugify/slugify.dart';
+import 'package:xml/xml.dart';
 
 class PageCommand extends Command {
   @override
