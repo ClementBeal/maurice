@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:maurice/maurice.dart';
-import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart' as p;
 import 'package:slugify/slugify.dart';
 
@@ -33,10 +32,7 @@ class NewPageCommand extends Command {
 
   @override
   void run() {
-    final inputs = <String, dynamic>{
-      "title": "",
-      "description": "",
-    };
+    final inputs = <String, dynamic>{};
 
     final isUsingResources = askChoiceQuestion(
         "Does this page use a resource to generate its content?");
@@ -70,14 +66,17 @@ class NewPageCommand extends Command {
       }
     }
 
-    while (inputs["title"]!.isEmpty) {
-      inputs["title"] = askQuestion("Title of the page (SEO)");
-    }
-    while (inputs["description"]!.isEmpty) {
-      inputs["description"] = askQuestion("Description of the page (SEO)");
+    if (!(inputs["use_resource"] != null)) {
+      while (inputs["title"]!.isEmpty) {
+        inputs["title"] = askQuestion("Title of the page (SEO)");
+      }
+      while (inputs["description"]!.isEmpty) {
+        inputs["description"] = askQuestion("Description of the page (SEO)");
+      }
     }
 
-    final filename = "${slugify(inputs["title"]!)}.html";
+    final filename =
+        "${slugify(inputs["use_resource"] ?? inputs["title"])}.html";
 
     final outputFile = File(
       p.join(
