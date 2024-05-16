@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
-import 'package:markdown/markdown.dart';
 import 'package:maurice/maurice.dart';
 import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart' as p;
@@ -19,10 +18,14 @@ class BuildCommand extends Command {
 
   BuildCommand();
 
+  /// Prepare the build environment
+  /// We load the base template, clean the output folder and that's it
   void _load() {
     baseHtml = File("layouts/_base.html").readAsStringSync();
 
-    Directory("output").createSync();
+    Directory("output")
+      ..deleteSync(recursive: true)
+      ..createSync();
     outputPath = "output";
 
     baseTemplate =
@@ -41,6 +44,8 @@ class BuildCommand extends Command {
     _buildAssets();
   }
 
+  /// copy the assets folder to the output
+  /// TODO : check if the images can be converted to be a better format(webp)
   void _buildAssets() {
     final templatesFolder = Directory("assets");
     Directory(p.join(outputPath, "assets")).createSync();
@@ -105,7 +110,7 @@ class BuildCommand extends Command {
             File(p.setExtension(filename, ".html"))
                 .writeAsStringSync(template.renderString(data.arguments));
           }
-        }
+        } else if (data.arguments["use_pagination"]) {}
       } else {
         final output = baseTemplate.renderString(
           {
