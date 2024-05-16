@@ -34,5 +34,17 @@ FileContent? parseFile(File file) {
     i++;
   }
 
-  return null;
+  final args = Map.fromEntries(
+    lines.where((line) => line.isNotEmpty).map(
+      (e) {
+        final index = e.indexOf(":");
+        final key = e.substring(0, index).trim();
+        final value = e.substring(index + 1).trim();
+
+        return MapEntry(key, value);
+      },
+    ),
+  );
+
+  return FileContent(arguments: args, markdown: "");
 }

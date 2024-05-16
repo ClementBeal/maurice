@@ -14,6 +14,7 @@ class ResourceCommand extends Command {
   final description = "Handle a resource";
 
   ResourceCommand() {
+    addSubcommand(CreateResourceCommand());
     addSubcommand(NewResourceCommand());
     addSubcommand(PublishResourceCommand());
   }
@@ -147,5 +148,40 @@ class PublishResourceCommand extends Command {
     }
 
     file.writeAsStringSync(lines.join("\n"));
+  }
+}
+
+class CreateResourceCommand extends Command {
+  @override
+  String get description => "Create a new type of resource";
+
+  @override
+  String get name => "create";
+
+  @override
+  void run() {
+    if (argResults == null || argResults!.rest.isEmpty) {
+      PrintMessage.error("You need to specify a resource name");
+      return;
+    }
+
+    final resourceName = argResults!.rest.first;
+
+    Directory(p.join("data", resourceName)).createSync();
+    final inputs = <String>[];
+
+    inputs.add(askQuestion("Add a field to the template"));
+
+    while (askChoiceQuestion("One more?")) {
+      inputs.add(askQuestion("Add a field to the template"));
+    }
+
+    File(p.join("data", resourceName, "_$resourceName.md")).writeAsStringSync(
+      inputs
+          .map(
+            (e) => "$e: {{ $e }}",
+          )
+          .join("\n"),
+    );
   }
 }
