@@ -67,12 +67,18 @@ class NewPageCommand extends Command {
     }
 
     if (!(inputs["use_resource"] != null)) {
-      while (inputs["title"]!.isEmpty) {
-        inputs["title"] = askQuestion("Title of the page (SEO)");
+      String title = "";
+      String description = "";
+
+      while (title.isEmpty) {
+        title = askQuestion("Title of the page (SEO)");
       }
-      while (inputs["description"]!.isEmpty) {
-        inputs["description"] = askQuestion("Description of the page (SEO)");
+      while (description.isEmpty) {
+        description = askQuestion("Description of the page (SEO)");
       }
+
+      inputs["title"] = title;
+      inputs["description"] = description;
     }
 
     final filename =

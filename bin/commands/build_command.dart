@@ -5,6 +5,7 @@ import 'package:markdown/markdown.dart';
 import 'package:maurice/maurice.dart';
 import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart' as p;
+import 'package:slugify/slugify.dart';
 
 class BuildCommand extends Command {
   @override
@@ -13,27 +14,19 @@ class BuildCommand extends Command {
   final description = "Build the project into html files";
 
   late String baseHtml;
-  late String postHtml;
   late String outputPath;
-  late String postOutputFile;
   late Template baseTemplate;
-  late Template postTemplate;
 
   BuildCommand();
 
   void _load() {
     baseHtml = File("layouts/_base.html").readAsStringSync();
-    postHtml = File("layouts/_post.html").readAsStringSync();
 
     Directory("output").createSync();
     outputPath = "output";
-    postOutputFile = p.join(outputPath, "posts");
-    Directory(postOutputFile).createSync();
 
     baseTemplate =
         Template(baseHtml, name: "_base.html", htmlEscapeValues: false);
-    postTemplate =
-        Template(postHtml, name: "_post.html", htmlEscapeValues: false);
   }
 
   @override
@@ -46,43 +39,6 @@ class BuildCommand extends Command {
 
     _buildPages();
     _buildAssets();
-
-    final postFiles = Directory("posts").listSync().whereType<Directory>();
-
-    for (var f in postFiles) {
-      final data = parseFile(
-        File(p.join(
-          f.path,
-          p.setExtension(p.basenameWithoutExtension(f.path), ".md"),
-        )),
-      );
-
-      if (data == null) {
-        PrintMessage.error("The follow post is incorrect : ${f.absolute.path}");
-        exit(0);
-      }
-
-      final renderedPostHtml = postTemplate.renderString(
-        {
-          "post": {"content": markdownToHtml(data.markdown)},
-        },
-      );
-
-      final filename = p.basenameWithoutExtension(f.path);
-      final name = filename.split("-").skip(1).join("-");
-
-      File(p.join(postOutputFile, "$name.html")).writeAsStringSync(
-        baseTemplate.renderString(
-          {
-            "body": renderedPostHtml,
-            "page": {
-              "title": data.arguments["title"],
-              "description": data.arguments["description"],
-            }
-          },
-        ),
-      );
-    }
   }
 
   void _buildAssets() {
@@ -116,19 +72,53 @@ class BuildCommand extends Command {
         exit(0);
       }
 
-      final output = baseTemplate.renderString(
-        {
-          "body": data!.markdown,
-          "page": {
-            "title": data.arguments["title"],
-            "description": data.arguments["description"],
-          }
-        },
-      );
+      if (data.arguments["use_resource"] != null) {
+        final template =
+            Template(data.markdown, name: page.path, htmlEscapeValues: false);
 
-      File(p.join(outputPath, filename)).writeAsString(output);
+        final String resource = data.arguments["use_resource"];
+
+        final resourceFiles = Directory(p.join("data", resource))
+            .listSync()
+            .whereType<Directory>()
+            .map(
+              (e) => File(
+                p.join(
+                  e.path,
+                  p.setExtension(p.basenameWithoutExtension(e.path), ".md"),
+                ),
+              ),
+            );
+
+        final bool generateMultiplePages =
+            data.arguments["one_page_per_item"] == "true";
+
+        if (generateMultiplePages) {
+          final String route = data.arguments["route"];
+          final resourceOutputFolder = Directory(p.join(outputPath, route))
+            ..createSync();
+
+          for (var resourceFile in resourceFiles) {
+            final data = parseFile(resourceFile.absolute);
+            final filename = p.join(
+                resourceOutputFolder.path, slugify(data!.arguments["title"]));
+            File(p.setExtension(filename, ".html"))
+                .writeAsStringSync(template.renderString(data.arguments));
+          }
+        }
+      } else {
+        final output = baseTemplate.renderString(
+          {
+            "body": data.markdown,
+            "page": {
+              "title": data.arguments["title"],
+              "description": data.arguments["description"],
+            }
+          },
+        );
+
+        File(p.join(outputPath, filename)).writeAsString(output);
+      }
     }
   }
-
-  void _generateSitemap() {}
 }
