@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:maurice/maurice.dart';
+import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart' as p;
 import 'package:slugify/slugify.dart';
 
@@ -33,21 +34,44 @@ class NewPostCommand extends Command {
   @override
   void run() {
     String title = "";
+    String description = "";
 
     while (title.isEmpty) {
       title = askQuestion("Title of the post");
     }
+    while (description.isEmpty) {
+      description = askQuestion("Description of the post");
+    }
 
-    PostModel(creationDate: DateTime.now(), title: title);
+    final lastFile = Directory("posts").listSync().whereType<File>().lastOrNull;
 
-    final filename = "1-${slugify(title)}.md";
+    final nextId = (lastFile == null)
+        ? 1
+        : int.parse(
+                p.basenameWithoutExtension(lastFile.path).split("-").first) +
+            1;
 
-    File(p.join(File(Platform.script.path).parent.path, "templates/_post.md"))
-        .copySync(
+    final filename = "$nextId-${slugify(title)}.md";
+
+    final template = Template(
+        File(getTemplatePath("_post.md")).readAsStringSync(),
+        name: "_post.md",
+        htmlEscapeValues: false);
+
+    final outputFile = File(
       p.join(
         "posts",
         filename,
       ),
-    );
+    )..writeAsStringSync(
+        template.renderString(
+          {
+            "title": title,
+            "description": description,
+          },
+        ),
+      );
+
+    PrintMessage.success("New post created : ${outputFile.absolute.path}");
   }
 }

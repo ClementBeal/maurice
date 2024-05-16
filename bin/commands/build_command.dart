@@ -11,7 +11,29 @@ class BuildCommand extends Command {
   @override
   final description = "Build the project into html files";
 
+  late String baseHtml;
+  late String postHtml;
+  late String outputPath;
+  late String postOutputFile;
+  late Template baseTemplate;
+  late Template postTemplate;
+
   BuildCommand();
+
+  void _load() {
+    baseHtml = File("layouts/_base.html").readAsStringSync();
+    postHtml = File("layouts/_post.html").readAsStringSync();
+
+    Directory("output").createSync();
+    outputPath = "output";
+    postOutputFile = p.join(outputPath, "posts");
+    Directory(postOutputFile).createSync();
+
+    baseTemplate =
+        Template(baseHtml, name: "_base.html", htmlEscapeValues: false);
+    postTemplate =
+        Template(postHtml, name: "_post.html", htmlEscapeValues: false);
+  }
 
   @override
   void run() {
@@ -19,18 +41,9 @@ class BuildCommand extends Command {
       return;
     }
 
-    Directory("output").createSync();
-    final outputPath = "output";
-    final postOutputFile = p.join(outputPath, "posts");
-    Directory(postOutputFile).createSync();
+    _load();
 
-    final baseHtml = File("layouts/base.html").readAsStringSync();
-    final postHtml = File("layouts/post.html").readAsStringSync();
-
-    final baseTemplate =
-        Template(baseHtml, name: "base.html", htmlEscapeValues: false);
-    final postTemplate =
-        Template(postHtml, name: "post.html", htmlEscapeValues: false);
+    _buildPages();
 
     final postFiles = Directory("posts").listSync().whereType<File>().where(
           (e) => p.extension(e.path) == ".md",
@@ -54,11 +67,35 @@ class BuildCommand extends Command {
         baseTemplate.renderString(
           {
             "body": renderedPostHtml,
-            "title": "Test",
-            "description": "Test description"
+            "page": {
+              "title": "Test",
+              "description": "Test description",
+            }
           },
         ),
       );
+    }
+  }
+
+  void _buildPages() {
+    final pagesFiles = Directory("pages").listSync().whereType<File>().where(
+          (e) => p.extension(e.path) == ".html",
+        );
+
+    for (var page in pagesFiles) {
+      final filename = p.basename(page.path);
+
+      final output = baseTemplate.renderString(
+        {
+          "body": page.readAsStringSync(),
+          "page": {
+            "title": "Test",
+            "description": "Test description",
+          }
+        },
+      );
+
+      File(p.join(outputPath, filename)).writeAsString(output);
     }
   }
 }

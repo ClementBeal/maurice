@@ -1,5 +1,5 @@
-title : {{}}
-description : {{}}
+title : {{ title }}
+description : {{ description }}
 
 ---
 
