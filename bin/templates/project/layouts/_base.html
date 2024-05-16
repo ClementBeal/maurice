@@ -7,15 +7,27 @@
     <title>{{ page.title }}</title>
     <meta name="description" content="{{ page.description }}" />
     <link rel="icon" href="favicon.ico" type="image/x-icon" />
-    <link rel="stylesheet" href="assets/styles.css" />
+    <link rel="stylesheet" href="assets/style.css" />
     <style></style>
     <link
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
       rel="stylesheet"
     />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- For color syntax -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dart.min.js"></script>
+    <script>hljs.highlightAll();</script>
   </head>
   <body>
-    <nav>Lol</nav>
+    <nav>
+      <ul>
+        <li>Blog</li>
+        <li>Projects</li>
+      </ul>
+    </nav>
 
     <section>{{ body }}</section>
 
