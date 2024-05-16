@@ -45,7 +45,8 @@ class NewPostCommand extends Command {
       description = askQuestion("Description of the post");
     }
 
-    final lastFile = Directory("posts").listSync().whereType<File>().lastOrNull;
+    final lastFile =
+        Directory("posts").listSync().whereType<Directory>().lastOrNull;
 
     final nextId = (lastFile == null)
         ? 1
