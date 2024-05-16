@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:markdown/markdown.dart';
 import 'package:maurice/maurice.dart';
 import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart' as p;
@@ -115,8 +116,14 @@ class BuildCommand extends Command {
                 url:
                     "https://test.com/$route${slugify(data!.arguments["title"])}"));
 
-            File(p.setExtension(filename, ".html"))
-                .writeAsStringSync(template.renderString(data.arguments));
+            File(p.setExtension(filename, ".html")).writeAsStringSync(
+              template.renderString(
+                {
+                  ...data.arguments,
+                  "markdown": markdownToHtml(data.markdown),
+                },
+              ),
+            );
           }
         } else if (data.arguments["use_pagination"] == "true") {}
       } else {
