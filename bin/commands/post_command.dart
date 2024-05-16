@@ -45,8 +45,10 @@ class NewPostCommand extends Command {
       description = askQuestion("Description of the post");
     }
 
-    final lastFile =
-        Directory("posts").listSync().whereType<Directory>().lastOrNull;
+    final lastFile = Directory(p.join("data", "posts"))
+        .listSync()
+        .whereType<Directory>()
+        .lastOrNull;
 
     final nextId = (lastFile == null)
         ? 1
@@ -57,16 +59,18 @@ class NewPostCommand extends Command {
     final filename = "$nextId-${slugify(title)}.md";
 
     final template = Template(
-        File(getTemplatePath("_post.md")).readAsStringSync(),
+        File(p.join("data", "posts", "_post.md")).readAsStringSync(),
         name: "_post.md",
         htmlEscapeValues: false);
 
-    Directory(p.join("posts", "$nextId-${slugify(title)}")).createSync();
-    Directory(p.join("posts", "$nextId-${slugify(title)}", "images"))
+    Directory(p.join("data", "posts", "$nextId-${slugify(title)}"))
+        .createSync();
+    Directory(p.join("data", "posts", "$nextId-${slugify(title)}", "images"))
         .createSync();
 
     final outputFile = File(
       p.join(
+        "data",
         "posts",
         "$nextId-${slugify(title)}",
         filename,
