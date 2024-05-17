@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:markdown/markdown.dart';
 import 'package:maurice/maurice.dart';
+import 'package:maurice/src/utils/file_parser.dart';
 import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart' as p;
 import 'package:slugify/slugify.dart';
@@ -112,20 +113,55 @@ class BuildCommand extends Command {
             final data = parseFile(resourceFile.absolute);
             final filename = p.join(
                 resourceOutputFolder.path, slugify(data!.arguments["title"]));
-            sitemap.add(SitemapItem(
+
+            sitemap.add(
+              SitemapItem(
                 url:
-                    "https://test.com/$route${slugify(data!.arguments["title"])}"));
+                    "https://test.com/$route${slugify(data!.arguments["title"])}",
+              ),
+            );
 
             File(p.setExtension(filename, ".html")).writeAsStringSync(
-              template.renderString(
+              baseTemplate.renderString(
                 {
+                  "page": {
+                    "title": "",
+                    "description": "",
+                  },
                   ...data.arguments,
-                  "markdown": markdownToHtml(data.markdown),
+                  "body": markdownToHtml(data.markdown),
                 },
               ),
             );
           }
-        } else if (data.arguments["use_pagination"] == "true") {}
+        } else if (data.arguments["use_pagination"] == "true") {
+          final data = <FileContent>[];
+
+          for (var e in resourceFiles) {
+            final fileData = parseFile(e);
+
+            if (fileData != null) {
+              data.add(fileData);
+            }
+          }
+
+          print("There is resources : ${data.length}");
+
+          final a = template.renderString({"${resource}s": resource});
+
+          final outputFile =
+              File(p.join(outputPath, "${resource}s", "page", "1.html"));
+          outputFile.parent.createSync(recursive: true);
+          outputFile.writeAsStringSync(baseTemplate.renderString(
+            {
+              "body": a,
+              "page": {
+                "title": "",
+                "description": "",
+              }
+            },
+          ));
+        }
       } else {
         final output = baseTemplate.renderString(
           {
