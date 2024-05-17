@@ -1,12 +1,13 @@
 name: maurice
-description: A sample command-line application with basic argument parsing.
+description: Maurice a static website generator made in Dart. Generates blogs or websites quickly
 version: 0.0.1-dev
 repository: https://github.com/ClementBeal/maurice
 issue_tracker: https://github.com/ClementBeal/maurice/issues
 
 topics:
   - blog
-  - static website generator
+  - static
+  - generator
   - website
 
 environment:

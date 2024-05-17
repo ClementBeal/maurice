@@ -27,6 +27,10 @@ class ResourceCommand extends Command {
   }
 }
 
+/// Add a new resource data for a given resource name
+/// It will be use to generate pages
+///
+///  `maurice resource new <resource name>`
 class NewResourceCommand extends Command {
   @override
   String get description => "Add a new resource";
@@ -46,46 +50,53 @@ class NewResourceCommand extends Command {
     }
 
     final resource = argResults!.rest.first;
-    final templateFile = File(p.join("data", resource, "_$resource.md"));
+
+    // we need the resource template to generate the new resource
+    final templateFile = File(p.join("resources", resource, "_$resource.md"));
     final data = parseFile(templateFile);
 
     final inputs = <String, String>{};
 
+    // we ask for a filename
     final placeholder = askQuestion("A name for the file like a sentence");
 
+    // we ask questions to fill the needed data for the template
     for (var e in data!.arguments.entries) {
       inputs[e.key] = askQuestion(e.key);
     }
 
-    final lastFile = Directory(p.join("data", resource))
+    final lastFile = Directory(p.join("resources", resource))
         .listSync()
         .whereType<Directory>()
         .lastOrNull;
 
+    // we parse the filename of the lastfile to get its id
+    // if it's empty, the new ID is 1
+    // otherwise we increment the id
     final nextId = (lastFile == null)
         ? 1
         : int.parse(
                 p.basenameWithoutExtension(lastFile.path).split("-").first) +
             1;
 
+    // the format is "<id>-<filename>.md"
     final filename = "$nextId-${slugify(placeholder)}.md";
 
     final template = Template(
-      File(p.join("data", resource, "_$resource.md")).readAsStringSync(),
+      File(p.join("resources", resource, "_$resource.md")).readAsStringSync(),
       name: "_$resource.md",
       htmlEscapeValues: false,
     );
 
-    Directory(p.join("data", resource, "$nextId-${slugify(placeholder)}"))
-        .createSync();
-    Directory(p.join(
-            "data", resource, "$nextId-${slugify(placeholder)}", "images"))
+    // we create a new folder for the resources because we might need to associate medias to it
+    // the resource may need images later
+    Directory(p.join("resources", resource, "$nextId-${slugify(placeholder)}"))
         .createSync();
 
     // eg: data/post/1-my-example/1-my-example.md
     final outputFile = File(
       p.join(
-        "data",
+        "resources",
         resource,
         "$nextId-${slugify(placeholder)}",
         filename,
@@ -100,6 +111,10 @@ class NewResourceCommand extends Command {
   }
 }
 
+/// Publish a resource
+/// The resource will be available for the pages generation
+///
+/// `maurice resource publish <resource name> <resource id>`
 class PublishResourceCommand extends Command {
   @override
   String get description => "Publish a resource";
@@ -114,18 +129,21 @@ class PublishResourceCommand extends Command {
       return;
     }
 
-    final postId = int.parse(argResults!.rest.first);
+    final resourceName = argResults!.rest.first;
+    final resourceId = int.parse(argResults!.rest[1]);
 
-    final file = Directory("posts")
+    // we look for the resource with the given id
+    final file = Directory(p.join("resources", resourceName))
         .listSync()
         .whereType<File>()
         .firstWhereOrNull(
-          (element) =>
-              p.basenameWithoutExtension(element.path).startsWith("$postId-"),
+          (element) => p
+              .basenameWithoutExtension(element.path)
+              .startsWith("$resourceId-"),
         );
 
     if (file == null) {
-      PrintMessage.error("We can't find a resource with the id $postId");
+      PrintMessage.error("We can't find a resource with the id $resourceId");
       return;
     }
 
@@ -133,6 +151,8 @@ class PublishResourceCommand extends Command {
 
     int i = 0;
 
+    // look for the "published" line and update it with the current date
+    // otherwise it insert the new line before the separator "---"
     while (i < lines.length) {
       final line = lines[i];
       if (line.startsWith("published")) {
@@ -151,6 +171,10 @@ class PublishResourceCommand extends Command {
   }
 }
 
+/// Create a new kind of resource for the project
+/// It will ask questions to generate the template
+///
+/// `maurice resource create <resource name>`
 class CreateResourceCommand extends Command {
   @override
   String get description => "Create a new type of resource";
@@ -167,7 +191,7 @@ class CreateResourceCommand extends Command {
 
     final resourceName = argResults!.rest.first;
 
-    Directory(p.join("data", resourceName)).createSync();
+    Directory(p.join("resources", resourceName)).createSync();
     final inputs = <String>[];
 
     inputs.add(askQuestion("Add a field to the template"));
@@ -176,12 +200,14 @@ class CreateResourceCommand extends Command {
       inputs.add(askQuestion("Add a field to the template"));
     }
 
-    File(p.join("data", resourceName, "_$resourceName.md")).writeAsStringSync(
-      inputs
-          .map(
-            (e) => "$e: {{ $e }}",
-          )
-          .join("\n"),
-    );
+    // generate lines like this : "title: {{ title }}"
+    final template = inputs
+        .map(
+          (e) => "$e: {{ $e }}",
+        )
+        .join("\n");
+
+    File(p.join("resources", resourceName, "_$resourceName.md"))
+        .writeAsStringSync(template);
   }
 }

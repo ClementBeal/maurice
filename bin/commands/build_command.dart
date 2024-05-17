@@ -49,7 +49,7 @@ class BuildCommand extends Command {
     _generateSitemap(sitemap);
   }
 
-  /// copy the assets folder to the output
+  /// Copy the assets folder to the output
   /// TODO : check if the images can be converted to be a better format(webp)
   void _buildAssets() {
     final templatesFolder = Directory("assets");
@@ -67,6 +67,17 @@ class BuildCommand extends Command {
     );
   }
 
+  /// Generates the pages and subpages
+  ///
+  /// We generate different kind of pages:
+  ///
+  /// - standalone page : they don't use resources
+  ///
+  /// - resource page : they use a resource to generate its content
+  ///
+  /// - paginated resource page : take all the resources needed by the page and generate X pages with X resources each
+  ///
+  /// - unique-resource page : generate one page per item of the resource
   List<SitemapItem> _buildPages() {
     final sitemap = <SitemapItem>[];
     final pagesFiles = Directory("pages").listSync().whereType<File>().where(
@@ -84,12 +95,18 @@ class BuildCommand extends Command {
       }
 
       if (data.arguments["use_resource"] != null) {
-        final template =
-            Template(data.markdown, name: page.path, htmlEscapeValues: false);
+        // get the HTML block of the HTML file and put it into the template
+        final htmlTemplate = Template(
+          data.markdown,
+          name: page.path,
+          htmlEscapeValues: false,
+        );
 
+        // the name of the resource to inject
         final String resource = data.arguments["use_resource"];
 
-        final resourceFiles = Directory(p.join("data", resource))
+        // gather all the resources of this type
+        final resourceFiles = Directory(p.join("resources", resource))
             .listSync()
             .whereType<Directory>()
             .map(
@@ -109,6 +126,7 @@ class BuildCommand extends Command {
           final resourceOutputFolder = Directory(p.join(outputPath, route))
             ..createSync();
 
+          // for each resource file, we generate one page
           for (var resourceFile in resourceFiles) {
             final data = parseFile(resourceFile.absolute);
             final filename = p.join(
@@ -121,18 +139,18 @@ class BuildCommand extends Command {
               ),
             );
 
-            File(p.setExtension(filename, ".html")).writeAsStringSync(
-              baseTemplate.renderString(
-                {
-                  "page": {
-                    "title": "",
-                    "description": "",
-                  },
-                  ...data.arguments,
-                  "body": markdownToHtml(data.markdown),
+            final pageContent = baseTemplate.renderString(
+              {
+                "page": {
+                  "title": "",
+                  "description": "",
                 },
-              ),
+                ...data.arguments,
+                "body": markdownToHtml(data.markdown),
+              },
             );
+
+            _saveHTMLpage(File(p.setExtension(filename, ".html")), pageContent);
           }
         } else if (data.arguments["use_pagination"] == "true") {
           final data = <FileContent>[];
@@ -145,18 +163,13 @@ class BuildCommand extends Command {
             }
           }
 
-          print("There is resources : ${data.length}");
-
-          final a = template.renderString({
+          final a = htmlTemplate.renderString({
             "${resource}s": data.map(
               (e) => e.arguments,
             )
           });
 
-          final outputFile =
-              File(p.join(outputPath, "${resource}s", "page", "1.html"));
-          outputFile.parent.createSync(recursive: true);
-          outputFile.writeAsStringSync(baseTemplate.renderString(
+          final htmlContent = baseTemplate.renderString(
             {
               "body": a,
               "page": {
@@ -164,7 +177,30 @@ class BuildCommand extends Command {
                 "description": "",
               }
             },
-          ));
+          );
+
+          _saveHTMLpage(
+            File(p.join(outputPath, "${resource}s", "page", "1.html")),
+            htmlContent,
+          );
+        } else {
+          final data = <FileContent>[];
+
+          for (var e in resourceFiles) {
+            final fileData = parseFile(e);
+
+            if (fileData != null) {
+              data.add(fileData);
+            }
+          }
+
+          final htmlContent = htmlTemplate.renderString({
+            "${resource}s": data.map(
+              (e) => e.arguments,
+            )
+          });
+
+          _saveHTMLpage(File(p.join(outputPath, filename)), htmlContent);
         }
       } else {
         final output = baseTemplate.renderString(
@@ -179,13 +215,14 @@ class BuildCommand extends Command {
 
         sitemap.add(SitemapItem(url: "https://test.com/$filename"));
 
-        File(p.join(outputPath, filename)).writeAsString(output);
+        _saveHTMLpage(File(p.join(outputPath, filename)), output);
       }
     }
 
     return sitemap;
   }
 
+  /// Generate the sitemap using the previously generated pages
   void _generateSitemap(List<SitemapItem> urls) {
     final builder = XmlBuilder();
     builder.processing("xml", "version='1.0' encoding='UTF-8'");
@@ -212,6 +249,14 @@ class BuildCommand extends Command {
 
     File(p.join(outputPath, "sitemap.xml"))
         .writeAsStringSync(builder.buildDocument().outerXml);
+  }
+
+  /// Minify the HTML code and save it into a file
+  void _saveHTMLpage(File htmlFile, String htmlContent) {
+    final minifiedHTML = XmlDocument.parse(htmlContent).outerXml;
+
+    htmlFile.parent.createSync(recursive: true);
+    htmlFile.writeAsStringSync(minifiedHTML);
   }
 }
 
