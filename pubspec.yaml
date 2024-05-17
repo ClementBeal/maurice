@@ -1,6 +1,6 @@
 name: maurice
 description: A sample command-line application with basic argument parsing.
-version: 0.0.1
+version: 0.0.1-dev
 repository: https://github.com/ClementBeal/maurice
 issue_tracker: https://github.com/ClementBeal/maurice/issues
 
@@ -12,7 +12,7 @@ topics:
 environment:
   sdk: ^3.3.4
 
-executable:
+executables:
   maurice: maurice
 
 # Add regular dependencies here.

@@ -117,7 +117,7 @@ class BuildCommand extends Command {
             sitemap.add(
               SitemapItem(
                 url:
-                    "https://test.com/$route${slugify(data!.arguments["title"])}",
+                    "https://test.com/$route${slugify(data.arguments["title"])}",
               ),
             );
 
@@ -147,7 +147,11 @@ class BuildCommand extends Command {
 
           print("There is resources : ${data.length}");
 
-          final a = template.renderString({"${resource}s": resource});
+          final a = template.renderString({
+            "${resource}s": data.map(
+              (e) => e.arguments,
+            )
+          });
 
           final outputFile =
               File(p.join(outputPath, "${resource}s", "page", "1.html"));
