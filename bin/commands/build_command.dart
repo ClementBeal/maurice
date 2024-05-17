@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:markdown/markdown.dart';
 import 'package:maurice/maurice.dart';
+import 'package:maurice/src/models/config.model.dart';
 import 'package:maurice/src/utils/file_parser.dart';
 import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart' as p;
@@ -26,9 +27,12 @@ class BuildCommand extends Command {
   void _load() {
     baseHtml = File("layouts/_base.html").readAsStringSync();
 
-    Directory("output")
-      ..deleteSync(recursive: true)
-      ..createSync();
+    final outputDirectory = Directory("output");
+    if (outputDirectory.existsSync()) {
+      outputDirectory.deleteSync(recursive: true);
+    }
+
+    outputDirectory.createSync();
     outputPath = "output";
 
     baseTemplate =
@@ -79,6 +83,8 @@ class BuildCommand extends Command {
   ///
   /// - unique-resource page : generate one page per item of the resource
   List<SitemapItem> _buildPages() {
+    final config = Config.fromConfigFile();
+
     final sitemap = <SitemapItem>[];
     final pagesFiles = Directory("pages").listSync().whereType<File>().where(
           (e) => p.extension(e.path) == ".html",
@@ -133,9 +139,9 @@ class BuildCommand extends Command {
                 resourceOutputFolder.path, slugify(data!.arguments["title"]));
 
             sitemap.add(
-              SitemapItem(
-                url:
-                    "https://test.com/$route${slugify(data.arguments["title"])}",
+              SitemapItem.url(
+                config.baseurl,
+                "$route${slugify(data.arguments["title"])}",
               ),
             );
 
@@ -213,8 +219,7 @@ class BuildCommand extends Command {
           },
         );
 
-        sitemap.add(SitemapItem(url: "https://test.com/$filename"));
-
+        sitemap.add(SitemapItem.url(config.baseurl, filename));
         _saveHTMLpage(File(p.join(outputPath, filename)), output);
       }
     }
@@ -253,7 +258,10 @@ class BuildCommand extends Command {
 
   /// Minify the HTML code and save it into a file
   void _saveHTMLpage(File htmlFile, String htmlContent) {
-    final minifiedHTML = XmlDocument.parse(htmlContent).outerXml;
+    final xmlFile = XmlDocument.parse(htmlContent)
+      ..normalize(trimAllWhitespace: true);
+
+    final minifiedHTML = xmlFile.outerXml;
 
     htmlFile.parent.createSync(recursive: true);
     htmlFile.writeAsStringSync(minifiedHTML);
@@ -264,4 +272,16 @@ class SitemapItem {
   final String url;
 
   SitemapItem({required this.url});
+
+  factory SitemapItem.url(String url, String path) {
+    if (url.startsWith("https")) {
+      return SitemapItem(
+        url: Uri.https(url.split("https://").last, path).toString(),
+      );
+    } else {
+      return SitemapItem(
+        url: Uri.http(url.split("http://").last, path).toString(),
+      );
+    }
+  }
 }

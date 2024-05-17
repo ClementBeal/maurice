@@ -40,6 +40,7 @@ class NewPageCommand extends Command {
 
     if (isUsingResources) {
       resourceName = askQuestion("What is the resource to use?");
+
       while (!Directory(p.join("resources", resourceName)).existsSync()) {
         PrintMessage.error("The resource $resourceName does not exist");
         resourceName = askQuestion("What is the resource to use?");
