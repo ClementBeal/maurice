@@ -190,34 +190,51 @@ class BuildCommand extends Command {
             _saveHTMLpage(File(p.setExtension(filename, ".html")), pageContent);
           }
         } else if (data.arguments["use_pagination"] == "true") {
-          final data = <FileContent>[];
+          final fileContents = <FileContent>[];
+          final itemsPerPage = int.parse(data.arguments["items_per_page"]!);
 
           for (var e in resourceFiles) {
             final fileData = parseFile(e);
 
             if (fileData != null) {
-              data.add(fileData);
+              fileContents.add(fileData);
             }
           }
 
-          final a = htmlTemplate.renderString({
-            "${resource}s": data.map(
-              (e) => e.arguments,
-            )
-          });
+          int i = 0;
 
-          final htmlContent = baseTemplate.renderString(
-            {
-              "body": a,
-              "_pageTitle": "",
-              "_pageDescription": "",
-            },
-          );
+          while (i < fileContents.length) {
+            final itemPage = fileContents.skip(i).take(itemsPerPage);
+            i += itemsPerPage;
 
-          _saveHTMLpage(
-            File(p.join(outputPath, "${resource}s", "page", "1.html")),
-            htmlContent,
-          );
+            final a = htmlTemplate.renderString({
+              "${resource}s": itemPage.map(
+                (e) => e.arguments,
+              )
+            });
+
+            final htmlContent = baseTemplate.renderString(
+              {
+                "body": a,
+                "_pageTitle": "",
+                "_pageDescription": "",
+              },
+            );
+
+            final pageId = i ~/ itemsPerPage;
+
+            if (pageId == 1) {
+              _saveHTMLpage(
+                File(p.join(parent.path, "index.html")),
+                htmlContent,
+              );
+            }
+
+            _saveHTMLpage(
+              File(p.join(outputPath, "${resource}s", "page", "$pageId.html")),
+              htmlContent,
+            );
+          }
         } else {
           final data = <FileContent>[];
 
