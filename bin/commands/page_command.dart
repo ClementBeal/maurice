@@ -34,6 +34,8 @@ class NewPageCommand extends Command {
   void run() {
     final inputs = <String, dynamic>{};
 
+    String route = askQuestion("Define a route (eg: /articles/how-to-fix)");
+
     final isUsingResources = askChoiceQuestion(
         "Does this page use a resource to generate its content?");
     String resourceName;
@@ -52,8 +54,6 @@ class NewPageCommand extends Command {
           "Should we generate one page for each $resourceName?");
 
       if (inputs["one_page_per_item"]) {
-        inputs["route"] =
-            askQuestion("Define a route for the items (eg: /$resourceName/)");
       } else {
         final needsPagination = askChoiceQuestion("Does it need pagination?");
 
@@ -67,30 +67,31 @@ class NewPageCommand extends Command {
       }
     }
 
-    if (!(inputs["use_resource"] != null)) {
-      String title = "";
-      String description = "";
+    String title = "";
+    String description = "";
 
-      while (title.isEmpty) {
-        title = askQuestion("Title of the page (SEO)");
-      }
-      while (description.isEmpty) {
-        description = askQuestion("Description of the page (SEO)");
-      }
-
-      inputs["title"] = title;
-      inputs["description"] = description;
+    while (title.isEmpty) {
+      title = askQuestion("Title of the page (SEO)");
+    }
+    while (description.isEmpty) {
+      description = askQuestion("Description of the page (SEO)");
     }
 
-    final filename =
-        "${slugify(inputs["use_resource"] ?? inputs["title"])}.html";
+    inputs["page.title"] = title;
+    inputs["page.description"] = description;
+
+    final routeWithoutLeadingSlash = route.substring(1).trim();
+    final filename = "$routeWithoutLeadingSlash.html";
 
     final outputFile = File(
       p.join(
         "pages",
         filename,
       ),
-    )..writeAsStringSync(inputs.entries
+    );
+    outputFile.parent.createSync(recursive: true);
+
+    outputFile.writeAsStringSync(inputs.entries
         .map(
           (e) => "${e.key}: ${e.value}",
         )
