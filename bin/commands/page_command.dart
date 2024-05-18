@@ -67,18 +67,8 @@ class NewPageCommand extends Command {
       }
     }
 
-    String title = "";
-    String description = "";
-
-    while (title.isEmpty) {
-      title = askQuestion("Title of the page (SEO)");
-    }
-    while (description.isEmpty) {
-      description = askQuestion("Description of the page (SEO)");
-    }
-
-    inputs["page.title"] = title;
-    inputs["page.description"] = description;
+    inputs["page.title"] = "";
+    inputs["page.description"] = "";
 
     final routeWithoutLeadingSlash = route.substring(1).trim();
     final filename = "$routeWithoutLeadingSlash.html";

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:intl/intl.dart';
 import 'package:markdown/markdown.dart';
 import 'package:maurice/maurice.dart';
 import 'package:maurice/src/models/config.model.dart';
@@ -47,10 +48,11 @@ class BuildCommand extends Command {
 
     _load();
 
-    final sitemap = _buildPages();
+    final result = _buildPages();
     _buildAssets();
 
-    _generateSitemap(sitemap);
+    _generateSitemap(result.$1);
+    _generateRSSFeed(Config.fromConfigFile(), result.$2);
   }
 
   /// Copy the assets folder to the output
@@ -82,11 +84,14 @@ class BuildCommand extends Command {
   /// - paginated resource page : take all the resources needed by the page and generate X pages with X resources each
   ///
   /// - unique-resource page : generate one page per item of the resource
-  List<SitemapItem> _buildPages() {
+  (List<SitemapItem>, List<RSSItem>) _buildPages() {
     final config = Config.fromConfigFile();
+
     final workingDirectory = p.join(Directory.current.path, "pages");
 
     final sitemap = <SitemapItem>[];
+    final rss = <RSSItem>[];
+
     final pagesFiles =
         Directory("pages").listSync(recursive: true).whereType<File>().where(
               (e) => p.extension(e.path) == ".html",
@@ -96,7 +101,6 @@ class BuildCommand extends Command {
       // extract the relative folder
       final route =
           File(p.relative(page.absolute.path, from: workingDirectory));
-      print("route: $route");
 
       // bad name
       // it's the route folder (eg: a/b/c/articles)
@@ -141,31 +145,45 @@ class BuildCommand extends Command {
             data.arguments["one_page_per_item"] == "true";
 
         if (generateMultiplePages) {
-          final String route = data.arguments["route"];
-          final resourceOutputFolder = Directory(p.join(outputPath, route))
-            ..createSync();
-
           // for each resource file, we generate one page
+          final pageItemTemplate =
+              Template(page.readAsStringSync(), htmlEscapeValues: false);
+
+          // it must have a title variable for the filename
           for (var resourceFile in resourceFiles) {
             final data = parseFile(resourceFile.absolute);
-            final filename = p.join(
-                resourceOutputFolder.path, slugify(data!.arguments["title"]));
+            if (!data!.arguments.containsKey("published")) {
+              continue;
+            }
+            final filename =
+                p.join(parent.path, slugify(data.arguments["title"]));
 
             sitemap.add(
               SitemapItem.url(
                 config.baseurl,
-                "$route${slugify(data.arguments["title"])}",
+                "${route.parent.path}/${slugify(data.arguments["title"])}",
+              ),
+            );
+            rss.add(
+              RSSItem.url(
+                data.arguments["title"] ?? "",
+                data.arguments["description"] ?? "",
+                config.baseurl,
+                DateTime.parse(data.arguments["published"]),
+                "${route.parent.path}/${slugify(data.arguments["title"])}",
               ),
             );
 
+            final pageItemContent = pageItemTemplate.renderString({
+              ...data.arguments,
+              "body": markdownToHtml(data.markdown),
+            });
+
+            final itemData = parseContent(pageItemContent.split("\n"))!;
             final pageContent = baseTemplate.renderString(
               {
-                "page": {
-                  "title": "",
-                  "description": "",
-                },
-                ...data.arguments,
-                "body": markdownToHtml(data.markdown),
+                ...itemData.arguments,
+                "body": itemData.markdown,
               },
             );
 
@@ -191,10 +209,8 @@ class BuildCommand extends Command {
           final htmlContent = baseTemplate.renderString(
             {
               "body": a,
-              "page": {
-                "title": "",
-                "description": "",
-              }
+              "_pageTitle": "",
+              "_pageDescription": "",
             },
           );
 
@@ -225,10 +241,8 @@ class BuildCommand extends Command {
         final output = baseTemplate.renderString(
           {
             "body": data.markdown,
-            "page": {
-              "title": data.arguments["title"],
-              "description": data.arguments["description"],
-            }
+            "_pageTitle": data.arguments["_pageTitle"] ?? "",
+            "_pageDescription": data.arguments["_pageDescription"] ?? "",
           },
         );
 
@@ -241,7 +255,7 @@ class BuildCommand extends Command {
       }
     }
 
-    return sitemap;
+    return (sitemap, rss);
   }
 
   /// Generate the sitemap using the previously generated pages
@@ -273,6 +287,53 @@ class BuildCommand extends Command {
         .writeAsStringSync(builder.buildDocument().outerXml);
   }
 
+  /// Generate the RSS feed using the previously generated pages
+  void _generateRSSFeed(Config config, List<RSSItem> urls) {
+    final dateFormat = DateFormat('EEE, dd MMM yyyy HH:mm:ss');
+
+    final builder = XmlBuilder();
+
+    builder.processing("rss", "version='2.0'");
+    builder.element(
+      "channel",
+      nest: () {
+        builder.element("title", nest: () {
+          builder.text("No title for the channel");
+        });
+        builder.element("link", nest: () {
+          builder.text("${config.baseurl}/rss.xml");
+        });
+
+        builder.element("description", nest: () {
+          builder.text("No description for the channel");
+        });
+
+        for (var url in urls) {
+          builder.element(
+            "item",
+            nest: () {
+              builder.element("title", nest: () {
+                builder.text(url.title);
+              });
+              builder.element("link", nest: () {
+                builder.text(url.url);
+              });
+              builder.element("description", nest: () {
+                builder.text(url.description);
+              });
+              builder.element("pubDate", nest: () {
+                builder.text(dateFormat.format(url.publishedDate));
+              });
+            },
+          );
+        }
+      },
+    );
+
+    File(p.join(outputPath, "rss.xml"))
+        .writeAsStringSync(builder.buildDocument().outerXml);
+  }
+
   /// Minify the HTML code and save it into a file
   void _saveHTMLpage(File htmlFile, String htmlContent) {
     final xmlFile = XmlDocument.parse(htmlContent)
@@ -297,6 +358,44 @@ class SitemapItem {
       );
     } else {
       return SitemapItem(
+        url: Uri.http(url.split("http://").last, path).toString(),
+      );
+    }
+  }
+}
+
+class RSSItem {
+  final String title;
+  final String url;
+  final DateTime publishedDate;
+  final String description;
+
+  RSSItem({
+    required this.title,
+    required this.url,
+    required this.publishedDate,
+    required this.description,
+  });
+
+  factory RSSItem.url(
+    String title,
+    String description,
+    String url,
+    DateTime publishedData,
+    String path,
+  ) {
+    if (url.startsWith("https")) {
+      return RSSItem(
+        title: title,
+        description: description,
+        publishedDate: publishedData,
+        url: Uri.https(url.split("https://").last, path).toString(),
+      );
+    } else {
+      return RSSItem(
+        title: title,
+        description: description,
+        publishedDate: publishedData,
         url: Uri.http(url.split("http://").last, path).toString(),
       );
     }

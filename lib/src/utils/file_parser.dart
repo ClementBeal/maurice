@@ -15,8 +15,10 @@ class FileContent {
 /// The file is made of 2 blocks separated by "---"
 /// The second block is optional.
 FileContent? parseFile(File file) {
-  final lines = file.readAsLinesSync();
+  return parseContent(file.readAsLinesSync());
+}
 
+FileContent? parseContent(List<String> lines) {
   int i = 0;
 
   while (i < lines.length) {

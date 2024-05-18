@@ -134,7 +134,7 @@ class PublishResourceCommand extends Command {
 
     // we look for the resource with the given id
     final file = Directory(p.join("resources", resourceName))
-        .listSync()
+        .listSync(recursive: true)
         .whereType<File>()
         .firstWhereOrNull(
           (element) => p
@@ -191,7 +191,7 @@ class CreateResourceCommand extends Command {
 
     final resourceName = argResults!.rest.first;
 
-    Directory(p.join("resources", resourceName)).createSync();
+    Directory(p.join("resources", resourceName)).createSync(recursive: true);
     final inputs = <String>[];
 
     inputs.add(askQuestion("Add a field to the template"));
