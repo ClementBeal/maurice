@@ -84,14 +84,27 @@ class BuildCommand extends Command {
   /// - unique-resource page : generate one page per item of the resource
   List<SitemapItem> _buildPages() {
     final config = Config.fromConfigFile();
+    final workingDirectory = p.join(Directory.current.path, "pages");
 
     final sitemap = <SitemapItem>[];
-    final pagesFiles = Directory("pages").listSync().whereType<File>().where(
-          (e) => p.extension(e.path) == ".html",
-        );
+    final pagesFiles =
+        Directory("pages").listSync(recursive: true).whereType<File>().where(
+              (e) => p.extension(e.path) == ".html",
+            );
 
     for (var page in pagesFiles) {
-      final filename = p.basename(page.path);
+      // extract the relative folder
+      final route =
+          File(p.relative(page.absolute.path, from: workingDirectory));
+      print("route: $route");
+
+      // bad name
+      // it's the route folder (eg: a/b/c/articles)
+      final parent = Directory(p.join(outputPath, route.parent.path));
+      print(parent.absolute.path);
+      parent.createSync(recursive: true);
+
+      final filename = p.basename(route.path);
       final data = parseFile(page);
 
       if (data == null) {
@@ -220,7 +233,11 @@ class BuildCommand extends Command {
         );
 
         sitemap.add(SitemapItem.url(config.baseurl, filename));
-        _saveHTMLpage(File(p.join(outputPath, filename)), output);
+        _saveHTMLpage(
+            File(
+              p.join((parent.path == ".") ? "" : parent.path, filename),
+            ),
+            output);
       }
     }
 
