@@ -67,8 +67,8 @@ class NewPageCommand extends Command {
       }
     }
 
-    inputs["page.title"] = "";
-    inputs["page.description"] = "";
+    inputs["_pageTitle"] = "";
+    inputs["_pageDescription"] = "";
 
     final routeWithoutLeadingSlash = route.substring(1).trim();
     final filename = "$routeWithoutLeadingSlash.html";

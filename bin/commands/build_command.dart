@@ -120,7 +120,7 @@ class BuildCommand extends Command {
       if (data.arguments["use_resource"] != null) {
         // get the HTML block of the HTML file and put it into the template
         final htmlTemplate = Template(
-          data.markdown,
+          page.readAsStringSync(),
           name: page.path,
           htmlEscapeValues: false,
         );
@@ -213,11 +213,12 @@ class BuildCommand extends Command {
               )
             });
 
+            final parsedPage = parseContent(a.split("\n"))!;
+
             final htmlContent = baseTemplate.renderString(
               {
-                "body": a,
-                "_pageTitle": "",
-                "_pageDescription": "",
+                "body": parsedPage.markdown,
+                ...parsedPage.arguments,
               },
             );
 
@@ -246,13 +247,28 @@ class BuildCommand extends Command {
             }
           }
 
-          final htmlContent = htmlTemplate.renderString({
+          final pageContent = htmlTemplate.renderString({
             "${resource}s": data.map(
               (e) => e.arguments,
             )
           });
 
-          _saveHTMLpage(File(p.join(outputPath, filename)), htmlContent);
+          print(pageContent);
+          final parsedPage = parseContent(pageContent.split("\n"));
+          print(parsedPage!.arguments);
+
+          sitemap.add(SitemapItem.url(config.baseurl, filename));
+
+          final finalHTML = baseTemplate.renderString(
+            {
+              ...parsedPage!.arguments,
+              "body": parsedPage.markdown,
+            },
+          );
+
+          print(pageContent);
+
+          _saveHTMLpage(File(p.join(parent.path, filename)), finalHTML);
         }
       } else {
         final output = baseTemplate.renderString(
