@@ -14,6 +14,8 @@ It supports :
 
 `dart pub global activate maurice`
 
+Or check the [pub page](https://pub.dev/packages/maurice)
+
 ## Demo
 
 It's a simple website generated with Maurice.

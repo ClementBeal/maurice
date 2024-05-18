@@ -1,6 +1,6 @@
 name: maurice
 description: Maurice a static website generator made in Dart. Generates blogs or websites quickly
-version: 0.0.1-dev
+version: 0.0.1
 repository: https://github.com/ClementBeal/maurice
 issue_tracker: https://github.com/ClementBeal/maurice/issues
 
