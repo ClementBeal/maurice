@@ -1,0 +1,23 @@
+use_resource: journalist
+one_page_per_item: false
+inject_resource: true
+_pageTitle: 
+_pageDescription: 
+
+---
+
+
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    {{#journalists}}
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="p-6">
+          <div class="flex items-center justify-center mb-4">
+            <img src="https://via.placeholder.com/150" alt="Journalist Picture" class="w-24 h-24 rounded-full"/>
+          </div>
+          <h2 class="text-xl font-semibold text-gray-800 mb-2">{{name}} ({{age}})</h2>
+          <p class="text-gray-600">{{description}}</p>
+        </div>
+      </div>
+    {{/journalists}}
+  </div>
+  

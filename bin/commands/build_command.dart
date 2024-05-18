@@ -105,7 +105,6 @@ class BuildCommand extends Command {
       // bad name
       // it's the route folder (eg: a/b/c/articles)
       final parent = Directory(p.join(outputPath, route.parent.path));
-      print(parent.absolute.path);
       parent.createSync(recursive: true);
 
       final filename = p.basename(route.path);
@@ -209,7 +208,10 @@ class BuildCommand extends Command {
 
             final a = htmlTemplate.renderString({
               "${resource}s": itemPage.map(
-                (e) => e.arguments,
+                (e) => {
+                  ...e.arguments,
+                  "_slugTitle": slugify(e.arguments["title"]),
+                },
               )
             });
 
@@ -253,9 +255,7 @@ class BuildCommand extends Command {
             )
           });
 
-          print(pageContent);
           final parsedPage = parseContent(pageContent.split("\n"));
-          print(parsedPage!.arguments);
 
           sitemap.add(SitemapItem.url(config.baseurl, filename));
 
@@ -265,8 +265,6 @@ class BuildCommand extends Command {
               "body": parsedPage.markdown,
             },
           );
-
-          print(pageContent);
 
           _saveHTMLpage(File(p.join(parent.path, filename)), finalHTML);
         }

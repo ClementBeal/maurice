@@ -1,4 +1,23 @@
-_pageTitle:
-_pageDescription:
+use_resource: article
+one_page_per_item: false
+use_pagination: true
+items_per_page: 12
+_pageTitle: Soccer Events
+_pageDescription: The best website to follow soccer
 
 ---
+
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    {{#articles}}
+      <a href="/article/{{ _slugTitle }}" class="bg-white rounded-lg shadow-md overflow-hidden transition-transform transform hover:-translate-y-1">
+        <div class="p-6">
+          <h2 class="text-xl font-semibold text-gray-800 mb-2">{{title}}</h2>
+          <p class="text-gray-600">{{description}}</p>
+        </div>
+        <div class="bg-gray-100 text-center py-2">
+          <span class="text-blue-500 font-semibold">Read More</span>
+        </div>
+      </a>
+    {{/articles}}
+  </div>
+  

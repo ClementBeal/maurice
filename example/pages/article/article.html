@@ -1,0 +1,16 @@
+use_resource: article
+one_page_per_item: true
+_pageTitle: {{ title }}
+_pageDescription: {{ description }}
+
+---
+
+<div class="max-w-3xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-4">{{title}}</h1>
+    <p class="text-gray-600 mb-2">by {{author}}</p>
+    <p class="text-gray-600 mb-4">{{published}}</p>
+    <div class="markdown-content">
+        {{body}}
+    </div>
+</div>
+  

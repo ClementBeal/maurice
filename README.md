@@ -14,6 +14,12 @@ It supports :
 
 `dart pub global activate maurice`
 
+## Demo
+
+It's a simple website generated with Maurice.
+
+[Maurice Soccer](https://maurice-soccer.pages.dev/)
+
 ## The concept
 
 **Maurice** is using 2 kind of object : `page` and `resource`
