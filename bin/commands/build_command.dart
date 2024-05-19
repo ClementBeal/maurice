@@ -324,42 +324,46 @@ class BuildCommand extends Command {
 
     final builder = XmlBuilder();
 
-    builder.processing("rss", "version='2.0'");
-    builder.element(
-      "channel",
-      nest: () {
-        builder.element("title", nest: () {
-          builder.text("No title for the channel");
-        });
-        builder.element("link", nest: () {
-          builder.text("${config.baseurl}/rss.xml");
-        });
+    builder.declaration();
+    builder.element("rss", attributes: {"version": "2.0"}, nest: () {
+      builder.element(
+        "channel",
+        nest: () {
+          builder.element("title", nest: () {
+            builder.text("No title for the channel");
+          });
+          builder.element("link", nest: () {
+            builder.text("${config.baseurl}/rss.xml");
+          });
 
-        builder.element("description", nest: () {
-          builder.text("No description for the channel");
-        });
+          builder.element("description", nest: () {
+            builder.text("No description for the channel");
+          });
 
-        for (var url in urls) {
-          builder.element(
-            "item",
-            nest: () {
-              builder.element("title", nest: () {
-                builder.text(url.title);
-              });
-              builder.element("link", nest: () {
-                builder.text(url.url);
-              });
-              builder.element("description", nest: () {
-                builder.text(url.description);
-              });
-              builder.element("pubDate", nest: () {
-                builder.text(dateFormat.format(url.publishedDate));
-              });
-            },
-          );
-        }
-      },
-    );
+          for (var url in urls) {
+            builder.element(
+              "item",
+              nest: () {
+                builder.element("title", nest: () {
+                  builder.text(url.title);
+                });
+                builder.element("link", nest: () {
+                  builder.text(url.url);
+                });
+                builder.element("description", nest: () {
+                  builder.text(url.description);
+                });
+                builder.element("pubDate", nest: () {
+                  final date =
+                      dateFormat.format(url.publishedDate.toUtc()) + " GMT";
+                  builder.text(date);
+                });
+              },
+            );
+          }
+        },
+      );
+    });
 
     File(p.join(outputPath, "rss.xml"))
         .writeAsStringSync(builder.buildDocument().outerXml);
