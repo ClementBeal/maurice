@@ -365,7 +365,7 @@ class BuildCommand extends Command {
                 });
                 builder.element("pubDate", nest: () {
                   final date =
-                      dateFormat.format(url.publishedDate.toUtc()) + " GMT";
+                      "${dateFormat.format(url.publishedDate.toUtc())} GMT";
                   builder.text(date);
                 });
               },
