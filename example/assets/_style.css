@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.markdown-content {
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.markdown-content h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+}
+
+.markdown-content h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+}
+
+.markdown-content h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+}
+
+.markdown-content p {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.markdown-content a {
+  color: #007bff;
+  text-decoration: underline;
+}
+
+.markdown-content a:hover {
+  color: #0056b3;
+}
+
+.markdown-content strong {
+  font-weight: 700;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  padding-left: 2em;
+}
+
+.markdown-content li {
+  margin-bottom: 0.5em;
+}
