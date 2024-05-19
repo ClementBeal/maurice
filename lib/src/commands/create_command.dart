@@ -21,7 +21,6 @@ class CreateCommand extends Command {
     }
 
     final directoryPath = argResults!.rest.first;
-
     final templatesFolder = Directory(getTemplatePath("project"));
 
     final directory = Directory(directoryPath);
