@@ -8,11 +8,23 @@ class Config {
   /// the baseurl of the website (eg: https://my-blog.com)
   final String baseurl;
 
-  Config({required this.baseurl});
+  /// the title of the RSS channel
+  final String rssChannelTitle;
+
+  /// the description of the RSS channel
+  final String rssChanneldescription;
+
+  Config({
+    required this.baseurl,
+    required this.rssChannelTitle,
+    required this.rssChanneldescription,
+  });
 
   factory Config.fromJson(Map<String, dynamic> json) {
     return Config(
       baseurl: json["baseurl"],
+      rssChannelTitle: json["rssChannelTitle"],
+      rssChanneldescription: json["rssChannelDescription"],
     );
   }
 

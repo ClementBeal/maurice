@@ -86,6 +86,7 @@ class BuildCommand extends Command {
   /// - unique-resource page : generate one page per item of the resource
   (List<SitemapItem>, List<RSSItem>) _buildPages() {
     final config = Config.fromConfigFile();
+    final rssUrl = "${config.baseurl}/rss.xml";
 
     final workingDirectory = p.join(Directory.current.path, "pages");
 
@@ -183,6 +184,8 @@ class BuildCommand extends Command {
               {
                 ...itemData.arguments,
                 "body": itemData.markdown,
+                "_rssURL": rssUrl,
+                "_rssTitle": config.rssChannelTitle,
               },
             );
 
@@ -221,6 +224,8 @@ class BuildCommand extends Command {
               {
                 "body": parsedPage.markdown,
                 ...parsedPage.arguments,
+                "_rssURL": rssUrl,
+                "_rssTitle": config.rssChannelTitle,
               },
             );
 
@@ -263,6 +268,8 @@ class BuildCommand extends Command {
             {
               ...parsedPage!.arguments,
               "body": parsedPage.markdown,
+              "_rssURL": rssUrl,
+              "_rssTitle": config.rssChannelTitle,
             },
           );
 
@@ -274,6 +281,8 @@ class BuildCommand extends Command {
             "body": data.markdown,
             "_pageTitle": data.arguments["_pageTitle"] ?? "",
             "_pageDescription": data.arguments["_pageDescription"] ?? "",
+            "_rssURL": rssUrl,
+            "_rssTitle": config.rssChannelTitle,
           },
         );
 
@@ -292,6 +301,7 @@ class BuildCommand extends Command {
   /// Generate the sitemap using the previously generated pages
   void _generateSitemap(List<SitemapItem> urls) {
     final builder = XmlBuilder();
+
     builder.processing("xml", "version='1.0' encoding='UTF-8'");
     builder.element("urlset", attributes: {
       "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
@@ -330,7 +340,7 @@ class BuildCommand extends Command {
         "channel",
         nest: () {
           builder.element("title", nest: () {
-            builder.text("No title for the channel");
+            builder.text(config.rssChannelTitle);
           });
           builder.element("link", nest: () {
             builder.text("${config.baseurl}/rss.xml");

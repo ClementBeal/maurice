@@ -1,3 +1,5 @@
 {
-    "baseurl": "https://maurice-soccer.pages.dev"
+    "baseurl": "https://maurice-soccer.pages.dev",
+    "rssChannelTitle": "Maurice Soccer",
+    "rssChannelDescription": "A demo of the Maurice generator"
 }

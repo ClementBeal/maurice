@@ -1,3 +1,5 @@
 {
-    "baseurl": "https://yourwebsite.com"
+    "baseurl": "https://yourwebsite.com",
+    "rssChannelTitle": "Your Website",
+    "rssChannelDescription": "Your RSS Channel description"
 }
